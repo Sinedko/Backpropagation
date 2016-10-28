@@ -1,7 +1,8 @@
-/* Backprop I: The Chosen One  */
-/* autor: Denis Vereš          */
-/* email: sinedko@gmail.com    */
-/* year: 2015                  */
+/* Backprop I: The Chosen One               */
+/* autor: Denis Vereš                       */
+/* email: sinedko@gmail.com                 */
+/* year: 2015                               */
+/* usage: gcc <filename> -Ofast -ffast-math */
 
 /*  Basic includes   */
 #include <stdio.h>   // printf
@@ -60,12 +61,15 @@ void initWeights(double min, double max) {                      // -------------
 /*      Function for passing individual layers    */
 void layerRun(int from[], int to[]) {             // --------------------
     for (int j = from[0]; j < to[0]; j++) {       // from first neuron in specific layer to last
+        //printf("\nx(%d) = w(0,%d) * y(0) + ",j,j);// --------------------
         x(j) = w(0,j) * y(0);                     // adding bias to the sum
         for (int i = from[1]; i <= to[1]; i++) {  // from first neuron to last neuron specific layer
             x(j) += w(i,j) * y(i);                // using formula to compute neuron inputs
+            //printf("w(%d)(%d) * y(%d) + ",i,j,i); // --------------------
         }                                         // --------------------
         y(j) = f(x(j));                           // using activation function with neuron inputs to gain activations
     }
+    //printf("\n---------");
 }
 
 /* Function for passing over the network (forward pass) */
@@ -87,7 +91,9 @@ void forwardRun() {
 void deltaRun(int from[], int to[]) {                    // --------------------
     for (int i = from[0]; i <= to[0]; i++) {             // from first neuron in specific layer to last
         d(i) = 0;                                        // clear old delta
+        //printf("\nd(%d) = ",i);                        // --------------------
         for (int j = from[1]; j <= to[1]; j++) {         // from first neuron in specific layer to last
+            //printf("d(%d) * w(%d)(%d) + ",j,i,j);      // --------------------
             d(i) += d(j) * w(i,j);                       // using formula to compute delta
         }                                                // --------------------
         d(i) *= df(x(i));                                // multiply with first derivation of activation function
@@ -101,7 +107,9 @@ void backwardRun() {
     /*      Compute deltas in output layers      */
     for (int i = FO, j = 0; i <= LO; i++, j++) { // from first to last neuron in output layer
         d(i) = (dv(j) - y(i)) * df(x(i));        // using formula to compute deltas on output layer
+        //printf("\nd(%d) = (dv(%d) - y(%d)) * df(x(%d))",i,j,i,i);
     }
+    //printf("\n---------");
     
     /* Compute deltas in first hidden layer  */
     from[0] = F1H; to[0] = L1H;              // definitions from-to for j (from first to last in first hidden layer)
@@ -114,6 +122,7 @@ void weightsRun(int from[], int to[]) {                     // -----------------
     for (int i = from[0]; i <= to[0]; i++)                  // from first neuron in specific layer to last
         for (int j = from[1]; j<= to[1]; j++) {             // same
             w(i,j) += (d(j) * y(i) * gamma);                // using formula for updating weights
+            //printf("\nw(%d)(%d) += d(%d) * y(%d) * gamma",i,j,j,i);
         }
 }
 
@@ -164,28 +173,32 @@ int main () {
                            // --------------------
     srand(42);             // seed for random numbers
     initWeights(-0.1,0.1); // initialize weights
-    trainData();
+    //trainData();
     t = clock();           // start timer
     
     printf("\nEpoch:  Output  Des.out. (Error)\n"); // --------------------
     printf("--------------------------------\n");   // --------------------
                                                     // --------------------
     for (int epoch = 0; epoch <= epochs; epoch++) { // for every epoch
-        for (int p = 0; p < 2000; p++) {			// for every pattern
+        for (int p = 0; p < 4; p++) {			    // for every pattern
             y(1)  =  XOR[p][0];				        // input 1 (XOR data)
             y(2)  =  XOR[p][1];				        // input 2 (XOR data)
             dv(0) =  XOR[p][2];				        // desired output (XOR data)
+                                                    // --------------------
+            //y(1)  =  training.x[p] / 100;         // input 1 (spiral data)
+            //y(2)  =  training.y[p] / 100;         // input 2 (spiral data)
+            //dv(0) = training.dv[p];               // desired output (spiral data)
                                                     // --------------------
             forwardRun();                           // train
             backwardRun();                          // train
             weightsUpdate();                        // train
                                                     // --------------------
-            if (epoch % 20000==0) {				    // every 20000 ep. print error
+            if (epoch % 1000==0) {				    // every 20000 ep. print error
                 if (p == 0 && epoch != 0)           // --------------------
                     printf("\n");		            // --------------------
                 forwardRun();                       // runs network
                 double J=fabs(dv(0) - y(FO));		// compute the error
-                if (p % 500 == 0) printf("%5d: %f %f (%.3f)\n",epoch,y(FO),dv(0),J);
+                if (p % 500 == 0) printf("%5d: %f %f (%.3f)",epoch,y(FO),dv(0),J);
             }
         }
     }
@@ -193,7 +206,7 @@ int main () {
     t = clock() - t;                 // stop timer
     sec = ((float)t)/CLOCKS_PER_SEC; // conversion to seconds
     
-    printf("--------------------------------\n%.3f sec\n\n",sec);
-    
+    //printf("--------------------------------\n%.3f sec\n\n",sec);
+    printf("\n%.3f ",sec);
     return 0;
 }
